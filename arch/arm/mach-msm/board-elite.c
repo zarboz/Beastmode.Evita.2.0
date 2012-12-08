@@ -5841,7 +5841,7 @@ static struct msm_spm_platform_data msm_spm_data[] __initdata = {
 	},
 };
 
-#ifdef CONFIG_PERFLOCK
+#if 0
 static unsigned elite_perf_acpu_table[] = {
 	810000000, /* LOWEST */
 	918000000, /* LOW */
@@ -7611,7 +7611,7 @@ static void __init elite_init(void)
 	create_proc_read_entry("emmc", 0, NULL, emmc_partition_read_proc, NULL);
 	create_proc_read_entry("dying_processes", 0, NULL, dying_processors_read_proc, NULL);
 
-#ifdef CONFIG_PERFLOCK
+#if 0
 	perflock_init(&elite_perflock_data);
 	cpufreq_ceiling_init(&elite_cpufreq_ceiling_data);
 #endif

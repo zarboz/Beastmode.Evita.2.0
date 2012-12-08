@@ -202,7 +202,7 @@ static struct android_dev *_android_dev;
 #endif
 
 static struct wake_lock android_usb_idle_wake_lock;
-#ifdef CONFIG_PERFLOCK
+#if 0
 static struct perf_lock android_usb_perf_lock;
 #endif
 
@@ -273,7 +273,7 @@ static void android_work(struct work_struct *data)
 		dev->pdata->sfab_lock(0);
 	if (wake_lock_active(&android_usb_idle_wake_lock))
 		wake_unlock(&android_usb_idle_wake_lock);
-#ifdef CONFIG_PERFLOCK
+#if 0
 	if (is_perf_lock_active(&android_usb_perf_lock))
 		perf_unlock(&android_usb_perf_lock);
 #endif
@@ -296,7 +296,7 @@ static void android_work(struct work_struct *data)
 		if (count) {
 			if (!wake_lock_active(&android_usb_idle_wake_lock))
 				wake_lock(&android_usb_idle_wake_lock);
-#ifdef CONFIG_PERFLOCK
+#if 0
 			if (!is_perf_lock_active(&android_usb_perf_lock))
 				perf_lock(&android_usb_perf_lock);
 #endif
@@ -2543,7 +2543,7 @@ static int __init init(void)
 	wake_lock_init(&android_usb_idle_wake_lock, WAKE_LOCK_IDLE,
 					"android_usb_idle");
 
-#ifdef CONFIG_PERFLOCK
+#if 0
 	perf_lock_init(&android_usb_perf_lock, PERF_LOCK_LOW, "android_usb");
 #endif
 

@@ -15,7 +15,7 @@
 
 #include "power.h"
 
-#ifdef CONFIG_PERFLOCK
+#if 0
 #include <mach/perflock.h>
 #endif
 
@@ -323,7 +323,7 @@ power_attr(power_state_end);
 power_attr(power_state_trigger);
 #endif
 
-#ifdef CONFIG_PERFLOCK
+#if 0
 static struct perf_lock user_perf_lock;
 static struct perf_lock user_cpufreq_ceiling[CEILING_LEVEL_INVALID];
 static ssize_t
@@ -468,7 +468,7 @@ static struct attribute * g[] = {
    &power_state_trigger_attr.attr,
 #endif
 
-#ifdef CONFIG_PERFLOCK
+#if 0
 	&perflock_attr.attr,
 	&cpufreq_ceiling_attr.attr,
 #endif
@@ -496,7 +496,7 @@ static inline int pm_start_workqueue(void) { return 0; }
 static int __init pm_init(void)
 {
 	int error = pm_start_workqueue();
-#ifdef CONFIG_PERFLOCK
+#if 0
 	int i;
 	static char buf[3][38];
 #endif
@@ -505,7 +505,7 @@ static int __init pm_init(void)
 	hibernate_image_size_init();
 	hibernate_reserved_size_init();
 	power_kobj = kobject_create_and_add("power", NULL);
-#ifdef CONFIG_PERFLOCK
+#if 0
 	perf_lock_init(&user_perf_lock, PERF_LOCK_HIGHEST, "User Perflock");
 	for (i = 0; i < CEILING_LEVEL_INVALID; i++) {
 		snprintf(buf[i], 37, "User cpufreq_ceiling lock level(%d)", i);

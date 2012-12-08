@@ -29,9 +29,7 @@
 #include <mach/socinfo.h>
 
 #include "acpuclock.h"
-#ifdef CONFIG_PERFLOCK
 #include <mach/perflock.h>
-#endif
 
 #ifdef CONFIG_SMP
 struct cpufreq_work_struct {

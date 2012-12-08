@@ -417,7 +417,7 @@ void cpufreq_frequency_table_put_attr(unsigned int cpu);
 
 void print_cpu_freq_stats(int type);
 
-#ifdef CONFIG_PERFLOCK
+#if 0
 extern unsigned int get_max_cpu_freq(void);
 #endif
 

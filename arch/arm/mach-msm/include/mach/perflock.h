@@ -65,14 +65,8 @@ static inline void __init perflock_init(
 	struct perflock_platform_data *pdata) { return; }
 static inline void __init cpufreq_ceiling_init(
 	struct perflock_platform_data *pdata) { return; }
-static inline void perf_lock_init(struct perf_lock *lock,
-	unsigned int level, const char *name) { return; }
 static inline void perf_lock_init_v2(struct perf_lock *lock,
 	unsigned int level, const char *name) { return; }
-static inline void perf_lock(struct perf_lock *lock) { return; }
-static inline void perf_unlock(struct perf_lock *lock) { return; }
-static inline int is_perf_lock_active(struct perf_lock *lock) { return 0; }
-static inline int is_perf_locked(void) { return 0; }
 static inline void perflock_scaling_max_freq(unsigned int freq, unsigned int cpu) { return; }
 static inline void perflock_scaling_min_freq(unsigned int freq, unsigned int cpu) { return; }
 static inline void htc_print_active_perf_locks(void) { return; }
@@ -91,7 +85,7 @@ extern int is_perf_locked(void);
 extern void perflock_scaling_max_freq(unsigned int freq, unsigned int cpu);
 extern void perflock_scaling_min_freq(unsigned int freq, unsigned int cpu);
 extern int perflock_override(const struct cpufreq_policy *policy, const unsigned int new_freq);
-extern void htc_print_active_perf_locks(void);
+static inline void htc_print_active_perf_locks(void) { return; }
 #endif
 
 

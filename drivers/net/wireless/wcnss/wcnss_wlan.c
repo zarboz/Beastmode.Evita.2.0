@@ -367,11 +367,9 @@ static struct miscdevice wcnss_misc = {
 };
 #endif /* ifndef MODULE */
 
-#ifdef CONFIG_PERFLOCK
 #include <mach/perflock.h>
 struct perf_lock qcom_wlan_perf_lock;
 EXPORT_SYMBOL(qcom_wlan_perf_lock);
-#endif /* CONFIG_PERFLOCK */
 
 static int __devinit
 wcnss_wlan_probe(struct platform_device *pdev)
@@ -382,7 +380,7 @@ wcnss_wlan_probe(struct platform_device *pdev)
 		return -ENODEV;
 	}
 
-#ifdef CONFIG_PERFLOCK
+#if 0
         perf_lock_init(&qcom_wlan_perf_lock, PERF_LOCK_HIGHEST, "qcom-wifi-perf");
 #endif /* CONFIG_PERFLOCK */
 
