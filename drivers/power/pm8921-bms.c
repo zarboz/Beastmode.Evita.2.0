@@ -2407,7 +2407,7 @@ static int pm8921_bms_suspend(struct device *dev)
 
 static int pm8921_bms_resume(struct device *dev)
 {
-	u64 val;
+	u64 val = 0;
 	dump_cc_uah();
 	get_reg((void *)BMS_TOLERANCES, &val);
 	pr_info("BMS_TOLERANCES = 0x%02llx\n", val);
