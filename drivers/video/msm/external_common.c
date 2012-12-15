@@ -29,7 +29,7 @@ DEFINE_MUTEX(external_common_state_hpd_mutex);
 EXPORT_SYMBOL(external_common_state_hpd_mutex);
 
 #ifdef CONFIG_FB_MSM_HDMI_MHL_SUPERDEMO
-static struct st_demotv_patterns demotv_list[] = {
+static struct st_demotv_patterns demotv_list[1] = {
 	{"OTS"}, /*{"VSC"},*/
 };
 
@@ -1494,7 +1494,7 @@ static bool check_demotv_connect(void)
 	if (!external_common_state->demotv_desc_found)
 		goto l_result;
 
-	for (i=0; i<sizeof(demotv_list); i++)
+	for (i=0; i<(sizeof(demotv_list) / (sizeof(int))); i++)
 		if (!strncmp(external_common_state->vendor_id, demotv_list[i].vendor_id, 3)) {
 			tv_found = true;
 			break;
