@@ -1745,7 +1745,7 @@ bool_t	Yushan_Check_Pad_For_IntrID(uint8_t	bInterruptId)
 	SPI_Read(YUSHAN_IOR_NVM_SEND_ITR_PAD1 , 2, (uint8_t	*)&uwIntrSetsDivertedToPad1);
 
 	/* Trace through InterruptSets */
-	while(bIntrSetID < TOTAL_INTERRUPT_SETS)
+	while(bIntrSetID < (sizeof(bIntrSetID) / sizeof(int)))
 	{
 
 		if( (bInterruptId>=bFirstIndexForSet[bIntrSetID])&&(bInterruptId<bFirstIndexForSet[bIntrSetID+1]) )
