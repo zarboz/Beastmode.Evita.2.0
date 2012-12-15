@@ -78,6 +78,16 @@ config IOSCHED_VR
 	---help---
 	  Requests are chosen according to SSTF with a penalty of rev_penalty
 	  for switching head direction.
+	  
+config IOSCHED_NOOP
+	bool
+	default y
+	---help---
+	  The no-op I/O scheduler is a minimal scheduler that does basic merging
+	  and sorting. Its main uses include non-disk based block devices like
+	  memory devices, and specialised software or hardware environments
+	  that do their own scheduling and require only minimal assistance from
+	  the kernel.
           
 choice
 	prompt "Default I/O scheduler"
@@ -106,6 +116,9 @@ choice
 		
 	config DEFAULT_VR
 		bool "V(R)" if IOSCHED_VR=y
+		
+	config DEFAULT_NOOP
+		bool "No-op"
 
 endchoice
 
@@ -118,6 +131,7 @@ config DEFAULT_IOSCHED
 	default "row" if DEFAULT_ROW
 	default "sio" if DEFAULT_SIO
 	default "vr" if DEFAULT_VR
+	default "noop" if DEFAULT_NOOP
 
 endmenu
 
