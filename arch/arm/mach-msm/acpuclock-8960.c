@@ -1218,7 +1218,7 @@ static struct acpu_level * __init select_freq_plan(void)
 		pr_info("Applying min 1.15v fix for Krait Errata 26\n");
 		kraitv2_apply_vmin(acpu_freq_tbl);
 	}
-
+#ifdef CONFIG_CPU_FREQ_MIN_MAX
 	/* Adjust frequency table according to custom acpu_max_freq */
 	if (acpu_max_freq) {
 	    for (l = acpu_freq_tbl; l->speed.khz != 0; l++) {
@@ -1233,6 +1233,7 @@ static struct acpu_level * __init select_freq_plan(void)
 	 }
     }
 }
+#endif
 	/* Find the max supported scaling frequency. */
 	for (l = acpu_freq_tbl; l->speed.khz != 0; l++)
 		if (l->use_for_scaling)
