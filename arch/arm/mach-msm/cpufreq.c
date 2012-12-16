@@ -286,9 +286,9 @@ static void msm_cpufreq_early_suspend(struct early_suspend *h)
 		if (cmdline_maxscroff) {
 			cmdline_scroff = true;
 			curfreq = acpuclk_get_rate(cpu);
-			if (curfreq > cmdline_maxscroff) {/*
+			if (curfreq > cmdline_maxscroff) {
 				acpuclk_set_rate(cpu, cmdline_maxscroff, SETRATE_CPUFREQ);
-				curfreq = acpuclk_get_rate(cpu);*/
+				curfreq = acpuclk_get_rate(cpu);
 				printk(KERN_INFO "[Blackout-SCREEN_OFF]: Limited freq to '%u'\n", curfreq);
 			}
 		}
