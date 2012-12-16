@@ -1304,7 +1304,7 @@ static struct acpuclk_data acpuclk_8960_data = {
 
 static int __init acpuclk_8960_init(struct acpuclk_soc_data *soc_data)
 { 
-	int cpu;
+	
 	struct acpu_level *max_acpu_level = select_freq_plan();
 	init_clock_sources(&scalable[L2], &max_acpu_level->l2_level->speed);
 	on_each_cpu(per_cpu_init, max_acpu_level, true);
@@ -1312,12 +1312,6 @@ static int __init acpuclk_8960_init(struct acpuclk_soc_data *soc_data)
 	regulator_init();
 	bus_init();
 	
-#ifdef CONFIG_CMDLINE_OPTIONS
-	if ((cmdline_maxkhz) && (cmdline_minkhz)) {
-		for_each_possible_cpu(cpu)
-			acpuclk_8960_set_rate(cpu, cmdline_maxkhz, SETRATE_INIT);
-	} else 
-#endif
 	
 	cpufreq_table_init();
 
