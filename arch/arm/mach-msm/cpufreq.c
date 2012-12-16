@@ -29,7 +29,7 @@
 #include <mach/socinfo.h>
 
 #include "acpuclock.h"
-#ifdef CONFIG_PERFLOCK
+#if 0
 #include <mach/perflock.h>
 #endif
 
@@ -54,6 +54,7 @@ struct cpufreq_suspend_t {
 static DEFINE_PER_CPU(struct cpufreq_suspend_t, cpufreq_suspend);
 
 static int override_cpu;
+
 #ifdef CONFIG_CMDLINE_OPTIONS
 /*
  * start cmdline_khz
@@ -61,6 +62,7 @@ static int override_cpu;
 
 /* to be safe, fill vars with defaults */
 uint32_t cmdline_maxkhz = 1512000, cmdline_minkhz = 192000;
+
 #ifdef CONFIG_CPU_FREQ_DEFAULT_GOV_PERFORMANCE
 char cmdline_gov[16] = "performance";
 #endif
@@ -76,20 +78,47 @@ char cmdline_gov[16] = "ondemand";
 #ifdef CONFIG_CPU_FREQ_DEFAULT_GOV_CONSERVATIVE
 char cmdline_gov[16] = "conservative";
 #endif
+#ifdef CONFIG_CPU_FREQ_DEFAULT_GOV_INTERACTIVE
+char cmdline_gov[16] = "interactive";
+#endif
+#ifdef CONFIG_CPU_FREQ_DEFAULT_GOV_SMARTASSV2
+char cmdline_gov[16] = "smartassV2";
+#endif
 #ifdef CONFIG_CPU_FREQ_DEFAULT_GOV_LAGFREE
 char cmdline_gov[16] = "lagfree";
 #endif
-#ifdef CONFIG_CPU_FREQ_DEFAULT_GOV_INTERACTIVE
-char cmdline_gov[16] = "interactive";
+#ifdef CONFIG_CPU_FREQ_DEFAULT_GOV_SMARTASS
+char cmdline_gov[16] = "smartass";
 #endif
 #ifdef CONFIG_CPU_FREQ_DEFAULT_GOV_LAZY
 char cmdline_gov[16] = "lazy";
 #endif
+#ifdef CONFIG_CPU_FREQ_DEFAULT_GOV_ONDEMANDX
+char cmdline_gov[16] = "ondemandx";
+#endif
+#ifdef CONFIG_CPU_FREQ_DEFAULT_GOV_INTERACTIVEX
+char cmdline_gov[16] = "interactivex";
+#endif
+#ifdef CONFIG_CPU_FREQ_DEFAULT_GOV_INTELLIDEMAND
+char cmdline_gov[16] = "intellidemand";
+#endif
+#ifdef CONFIG_CPU_FREQ_DEFAULT_GOV_WHEATLEY
+char cmdline_gov[16] = "wheatley";
+#endif
+#ifdef CONFIG_CPU_FREQ_DEFAULT_GOV_SCARY
+char cmdline_gov[16] = "scary";
+#endif
+#ifdef CONFIG_CPU_FREQ_DEFAULT_GOV_ASSWAX
+char cmdline_gov[16] = "AssWax";
+#endif
 #ifdef CONFIG_CPU_FREQ_DEFAULT_GOV_BADASS
 char cmdline_gov[16] = "badass";
 #endif
+#ifdef CONFIG_CPU_FREQ_DEFAULT_GOV_HOTPLUG
+char cmdline_gov[16] = "hotplug";
+#endif
 
-uint32_t cmdline_maxscroff = 486000;
+uint32_t cmdline_maxscroff = 1512000;
 bool cmdline_scroff = false;
 
 /* only override the governor 2 times, when
@@ -211,31 +240,14 @@ static int __init cpufreq_read_maxscroff_cmdline(char *maxscroff)
 __setup("maxscroff=", cpufreq_read_maxscroff_cmdline);
 /* end cmdline_khz */
 #endif
+
 static int set_cpu_freq(struct cpufreq_policy *policy, unsigned int new_freq)
 {
 	int ret = 0;
-#ifdef CONFIG_PERFLOCK
-	int perf_freq = 0;
-#endif
+
 	struct cpufreq_freqs freqs;
 
 	freqs.old = policy->cur;
-#ifdef CONFIG_PERFLOCK
-	if (override_cpu) {
-		/* mfreq enabled */
-		if (policy->cur == policy->max)
-			return 0;
-		else
-			freqs.new = policy->max;
-	} else if ((perf_freq = perflock_override(policy, new_freq))) {
-		/* perflock & cpufreq_ceiling enabled */
-		if (policy->cur == perf_freq)
-			return 0;
-		else
-			freqs.new = perf_freq;
-	} else
-		freqs.new = new_freq;
-#else
 	if (override_cpu) {
 		if (policy->cur == policy->max)
 			return 0;
@@ -243,7 +255,6 @@ static int set_cpu_freq(struct cpufreq_policy *policy, unsigned int new_freq)
 			freqs.new = policy->max;
 	} else
 		freqs.new = new_freq;
-#endif
 	freqs.cpu = policy->cpu;
 	cpufreq_notify_transition(&freqs, CPUFREQ_PRECHANGE);
 	ret = acpuclk_set_rate(policy->cpu, freqs.new, SETRATE_CPUFREQ);
@@ -263,6 +274,7 @@ static void set_cpu_work(struct work_struct *work)
 	complete(&cpu_work->complete);
 }
 #endif
+
 #ifdef CONFIG_CMDLINE_OPTIONS
 static void msm_cpufreq_early_suspend(struct early_suspend *h)
 {
@@ -277,7 +289,7 @@ static void msm_cpufreq_early_suspend(struct early_suspend *h)
 			if (curfreq > cmdline_maxscroff) {
 				acpuclk_set_rate(cpu, cmdline_maxscroff, SETRATE_CPUFREQ);
 				curfreq = acpuclk_get_rate(cpu);
-				printk(KERN_INFO "[cmdline_maxscroff]: Limited freq to '%u'\n", curfreq);
+				printk(KERN_INFO "[Blackout-maxscroff]: Limited freq to '%u'\n", curfreq);
 			}
 		}
 		mutex_unlock(&per_cpu(cpufreq_suspend, cpu).suspend_mutex);
@@ -299,7 +311,7 @@ static void msm_cpufreq_late_resume(struct early_suspend *h)
 			if (curfreq != cpu_work->frequency) {
 				acpuclk_set_rate(cpu, cpu_work->frequency, SETRATE_CPUFREQ);
 				curfreq = acpuclk_get_rate(cpu);
-				printk(KERN_INFO "[cmdline_maxscroff]: Unlocking freq to '%u'\n", curfreq);
+				printk(KERN_INFO "[Blackout-maxscron]: Unlocking freq to '%u'\n", curfreq);
 			}
 		}
 		mutex_unlock(&per_cpu(cpufreq_suspend, cpu).suspend_mutex);
@@ -312,6 +324,7 @@ static struct early_suspend msm_cpufreq_early_suspend_handler = {
 	.resume = msm_cpufreq_late_resume,
 };
 #endif
+
 static int msm_cpufreq_target(struct cpufreq_policy *policy,
 				unsigned int target_freq,
 				unsigned int relation)
@@ -404,16 +417,11 @@ static int __cpuinit msm_cpufreq_init(struct cpufreq_policy *policy)
 		return -ENODEV;
 
 	table = cpufreq_frequency_get_table(policy->cpu);
+	if (table == NULL)
+		return -ENODEV;
 	if (cpufreq_frequency_table_cpuinfo(policy, table)) {
-#ifdef CONFIG_MSM_CPU_FREQ_SET_MIN_MAX
-		policy->cpuinfo.min_freq = CONFIG_MSM_CPU_FREQ_MIN;
-		policy->cpuinfo.max_freq = CONFIG_MSM_CPU_FREQ_MAX;
-#endif
+
 	}
-#ifdef CONFIG_MSM_CPU_FREQ_SET_MIN_MAX
-	policy->min = CONFIG_MSM_CPU_FREQ_MIN;
-	policy->max = CONFIG_MSM_CPU_FREQ_MAX;
-#endif
 
 	cur_freq = acpuclk_get_rate(policy->cpu);
 	if (cpufreq_frequency_table_target(policy, table, cur_freq,
@@ -445,12 +453,9 @@ static int __cpuinit msm_cpufreq_init(struct cpufreq_policy *policy)
 	INIT_WORK(&cpu_work->work, set_cpu_work);
 	init_completion(&cpu_work->complete);
 #endif
-#ifdef CONFIG_CMDLINE_OPTIONS
-	if ((cmdline_maxkhz) && (cmdline_minkhz)) {
-		policy->min  = cmdline_minkhz;
+	/* set safe default min and max speeds */
+		policy->min = cmdline_minkhz;
 		policy->max = cmdline_maxkhz;
-	}
-#endif
 	return 0;
 }
 
@@ -511,6 +516,7 @@ static ssize_t store_mfreq(struct sysdev_class *class,
 }
 
 static SYSDEV_CLASS_ATTR(mfreq, 0200, NULL, store_mfreq);
+
 #ifdef CONFIG_CMDLINE_OPTIONS
 static ssize_t show_max_screen_off_khz(struct cpufreq_policy *policy, char *buf)
 {
@@ -556,6 +562,7 @@ struct freq_attr msm_cpufreq_attr_max_screen_off_khz = {
 	.store = store_max_screen_off_khz,
 };
 #endif
+
 static struct freq_attr *msm_freq_attr[] = {
 	&cpufreq_freq_attr_scaling_available_freqs,
 #ifdef CONFIG_CMDLINE_OPTIONS
@@ -597,11 +604,9 @@ static int __init msm_cpufreq_register(void)
 #endif
 
 	register_pm_notifier(&msm_cpufreq_pm_notifier);
-	
 #ifdef CONFIG_CMDLINE_OPTIONS
 	register_early_suspend(&msm_cpufreq_early_suspend_handler);
-#endif	
-
+#endif
 	return cpufreq_register_driver(&msm_cpufreq_driver);
 }
 
