@@ -307,7 +307,7 @@ static void msm_cpufreq_late_resume(struct early_suspend *h)
 }
 
 static struct early_suspend msm_cpufreq_early_suspend_handler = {
-	.level = EARLY_SUSPEND_LEVEL_BLANK_SCREEN,
+	.level = EARLY_SUSPEND_LEVEL_BLANK_SCREEN + 1,
 	.suspend = msm_cpufreq_early_suspend,
 	.resume = msm_cpufreq_late_resume,
 };
