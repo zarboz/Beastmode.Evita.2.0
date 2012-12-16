@@ -39,8 +39,8 @@
  * also protects the cpufreq_cpu_data array.
  */
 /*added adjustable voltage steps to meet max clock needs dependant on the definition flag in /arc/arm/mach-msm*/
-#define FREQ_STEPS	28
 
+#define FREQ_STEPS	28
 
 static struct cpufreq_driver *cpufreq_driver;
 static DEFINE_PER_CPU(struct cpufreq_policy *, cpufreq_cpu_data);
@@ -300,10 +300,8 @@ void cpufreq_notify_transition(struct cpufreq_freqs *freqs, unsigned int state)
 		trace_cpu_frequency(freqs->new, freqs->cpu);
 		srcu_notifier_call_chain(&cpufreq_transition_notifier_list,
 				CPUFREQ_POSTCHANGE, freqs);
-		if (likely(policy) && likely(policy->cpu == freqs->cpu)) {
+		if (likely(policy) && likely(policy->cpu == freqs->cpu))
 			policy->cur = freqs->new;
-			sysfs_notify(&policy->kobj, NULL, "scaling_cur_freq");
-		}
 		break;
 	}
 }
@@ -405,9 +403,22 @@ static ssize_t show_##file_name				\
 {							\
 	return sprintf(buf, "%u\n", policy->object);	\
 }
-
+#ifdef CONFIG_CMDLINE_OPTIONS
+#define show_one_cpuinfomaxfreq(file_name, object)		\
+static ssize_t show_##file_name					\
+(struct cpufreq_policy *policy, char *buf)			\
+{								\
+	if (cmdline_maxkhz) { 				    	\
+		return sprintf(buf, "%u\n", cmdline_maxkhz);	\
+	} else {						\
+		return sprintf(buf, "%u\n", policy->object);	\
+	}							\
+}
+show_one_cpuinfomaxfreq(cpuinfo_max_freq, cpuinfo.max_freq);
+#else
+show_one(cpuinfo_max_freq, max);
+#endif
 show_one(cpuinfo_min_freq, cpuinfo.min_freq);
-show_one(cpuinfo_max_freq, cpuinfo.max_freq);
 show_one(cpuinfo_transition_latency, cpuinfo.transition_latency);
 show_one(scaling_min_freq, min);
 show_one(scaling_max_freq, max);
@@ -481,9 +492,6 @@ static ssize_t store_scaling_governor(struct cpufreq_policy *policy,
 	unsigned int ret = -EINVAL;
 	char	str_governor[16];
 	struct cpufreq_policy new_policy;
-	char *envp[3];
-	char buf1[64];
-	char buf2[64];
 
 	ret = cpufreq_get_policy(&new_policy, policy->cpu);
 	if (ret)
@@ -505,13 +513,6 @@ static ssize_t store_scaling_governor(struct cpufreq_policy *policy,
 	policy->user_policy.governor = policy->governor;
 
 	sysfs_notify(&policy->kobj, NULL, "scaling_governor");
-	
-	snprintf(buf1, sizeof(buf1), "GOV=%s", policy->governor->name);
-	snprintf(buf2, sizeof(buf2), "CPU=%u", policy->cpu);
-	envp[0] = buf1;
-	envp[1] = buf2;
-	envp[2] = NULL;
-	kobject_uevent_env(cpufreq_global_kobject, KOBJ_ADD, envp);
 
 	if (ret)
 		return ret;
@@ -627,7 +628,7 @@ static ssize_t show_bios_limit(struct cpufreq_policy *policy, char *buf)
 	}
 	return sprintf(buf, "%u\n", policy->cpuinfo.max_freq);
 }
-
+extern ssize_t acpuclk_get_vdd_levels_str(char *buf, int isApp);
 extern ssize_t acpuclk_get_vdd_levels_str(char *buf, int isApp);
 extern void acpuclk_set_vdd(unsigned acpu_khz, int vdd);
 extern void acpuclk_UV_mV_table(int cnt, int vdd_uv[]);
@@ -708,7 +709,6 @@ ssize_t store_UV_mV_table(struct cpufreq_policy *policy,
 	acpuclk_UV_mV_table(FREQ_STEPS, u);
 	return count;
 }
-
 
 cpufreq_freq_attr_ro_perm(cpuinfo_cur_freq, 0400);
 cpufreq_freq_attr_ro(cpuinfo_min_freq);
@@ -846,17 +846,6 @@ static int cpufreq_add_dev_policy(unsigned int cpu,
 #ifdef CONFIG_HOTPLUG_CPU
 	struct cpufreq_governor *gov;
 
-//***ADD HERE TO INSURE SECONDARY CPU'S ALWAYS FOLLOW CPU0**	
-	if(cpu >=1){   // force all other cpu's to follow cpu0
-		cpufreq_policy_save.max = per_cpu(cpufreq_cpu_data,0)->max;	
-		cpufreq_policy_save.min = per_cpu(cpufreq_cpu_data,0)->min;
-		policy->min = cpufreq_policy_save.min;
-		policy->user_policy.min = policy->min;
-		policy->max = cpufreq_policy_save.max;
-		policy->user_policy.max = policy->max;
-		goto jump_out;
-	}
-//***END
 	gov = __find_governor(per_cpu(cpufreq_policy_save, cpu).gov);
 	if (gov) {
 		policy->governor = gov;
@@ -871,8 +860,6 @@ static int cpufreq_add_dev_policy(unsigned int cpu,
 		policy->max = per_cpu(cpufreq_policy_save, cpu).max;
 		policy->user_policy.max = policy->max;
 	}
-//ADD THIS ALSO	
-	jump_out:
 	pr_debug("Restoring CPU%d min %d and max %d\n",
 		cpu, policy->min, policy->max);
 #endif
@@ -967,10 +954,13 @@ static int cpufreq_add_dev_interface(unsigned int cpu,
 				     struct sys_device *sys_dev)
 {
 	struct cpufreq_policy new_policy;
+#ifdef CONFIG_CMDLINE_OPTIONS
+	struct cpufreq_governor *fgov;
+#endif
 	struct freq_attr **drv_attr;
 	unsigned long flags;
 	int ret = 0;
-	unsigned int j;//q;
+	unsigned int j;
 
 	/* prepare interface data */
 	ret = kobject_init_and_add(&policy->kobj, &ktype_cpufreq,
@@ -1018,7 +1008,21 @@ static int cpufreq_add_dev_interface(unsigned int cpu,
 	memcpy(&new_policy, policy, sizeof(struct cpufreq_policy));
 	/* assure that the starting sequence is run in __cpufreq_set_policy */
 	policy->governor = NULL;
-
+#ifdef CONFIG_CMDLINE_OPTIONS
+	/* cmdline_khz governor */
+	fgov = __find_governor(cmdline_gov);
+	if ((*cmdline_gov) && (strcmp(cmdline_gov, "") != 0) &&
+	   ((strcmp(cmdline_gov, fgov->name)) == 0) && (cmdline_gov_cnt != 0)) {
+		if (cpufreq_parse_governor(cmdline_gov, &new_policy.policy,
+							&new_policy.governor))
+		return -EINVAL;
+		printk(KERN_INFO "[cmdline_gov]: Governor set to '%s' on CPU%i", cmdline_gov, cpu);
+		cmdline_gov_cnt--;
+	} else {
+		if (cmdline_gov_cnt != 0)
+			printk(KERN_INFO "[cmdline_gov]: ERROR! Could not set governor '%s' on CPU%i", cmdline_gov, cpu);
+	}
+#endif
 	/* set default policy */
 	ret = __cpufreq_set_policy(policy, &new_policy);
 	policy->user_policy.policy = policy->policy;
@@ -1056,7 +1060,6 @@ static int cpufreq_add_dev(struct sys_device *sys_dev)
 	unsigned int j;
 #ifdef CONFIG_HOTPLUG_CPU
 	int sibling;
-	struct cpufreq_policy *cp;
 #endif
 
 	if (cpu_is_offline(cpu))
@@ -1104,7 +1107,7 @@ static int cpufreq_add_dev(struct sys_device *sys_dev)
 	/* Set governor before ->init, so that driver could check it */
 #ifdef CONFIG_HOTPLUG_CPU
 	for_each_online_cpu(sibling) {
-		cp = per_cpu(cpufreq_cpu_data, sibling);
+		struct cpufreq_policy *cp = per_cpu(cpufreq_cpu_data, sibling);
 		if (cp && cp->governor &&
 		    (cpumask_test_cpu(cpu, cp->related_cpus))) {
 			policy->governor = cp->governor;
@@ -1125,17 +1128,7 @@ static int cpufreq_add_dev(struct sys_device *sys_dev)
 	}
 	policy->user_policy.min = policy->min;
 	policy->user_policy.max = policy->max;
-//***ADD THIS HERE TO FORCE SECONDARY CPU'S TO INITIALIZE AT SAME POLICY AS BOOT CPU0**	
-	if (policy->cpu >=1) {
-	// dealing with secondary cpu, force policy of cpu0 on this cpu as well for init
-	cp = per_cpu(cpufreq_cpu_data, 0);
-	policy->governor = cp->governor;
-	policy->min = cp->min;
-	policy->max = cp->max;
-	policy->user_policy.min = cp->user_policy.min;
-	policy->user_policy.max = cp->user_policy.max;
-	}
-//***END**
+
 	blocking_notifier_call_chain(&cpufreq_policy_notifier_list,
 				     CPUFREQ_START, policy);
 
@@ -1810,19 +1803,7 @@ static int __cpufreq_set_policy(struct cpufreq_policy *data,
 				struct cpufreq_policy *policy)
 {
 	int ret = 0;
-//***ADD HERE TO ENSURE ANYTIME THERE IS A POLICY CHANGE SECONDARY CPU ALWAYS
-//***FOLLOWS CPU0
-	struct cpufreq_policy *cpu0_policy;
-	if(data->cpu >= 1){
-	pr_debug("forcing cpu0 policy on cpu\n");
-	cpu0_policy = cpufreq_cpu_get(0); // force cpu1 to follow policy of cpu0
-	policy->min = cpu0_policy->min;
-	policy->max = cpu0_policy->max;
-	if(cpu0_policy->user_policy.governor){
-	  policy->governor = cpu0_policy->user_policy.governor;
-		}	
-	}
-//***END
+
 	pr_debug("setting new policy for CPU %u: %u - %u kHz\n", policy->cpu,
 		policy->min, policy->max);
 
@@ -2095,6 +2076,7 @@ EXPORT_SYMBOL_GPL(cpufreq_unregister_driver);
 static int __init cpufreq_core_init(void)
 {
 	int cpu;
+	int rc;
 
 	for_each_possible_cpu(cpu) {
 		per_cpu(cpufreq_policy_cpu, cpu) = -1;
@@ -2104,6 +2086,7 @@ static int __init cpufreq_core_init(void)
 	cpufreq_global_kobject = kobject_create_and_add("cpufreq",
 						&cpu_sysdev_class.kset.kobj);
 	BUG_ON(!cpufreq_global_kobject);
+	rc = sysfs_create_group(cpufreq_global_kobject, &vddtbl_attr_group);
 	register_syscore_ops(&cpufreq_syscore_ops);
 
 	return 0;
