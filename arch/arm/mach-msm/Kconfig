@@ -2280,6 +2280,14 @@ config ACPU_CUSTOM_FREQ_SUPPORT
 	default n
 	help
 	  Adds support for custom frequency table adjustments.
+	  
+config MSM_MPDEC
+	bool "Enable kernel based mpdecision"
+	depends on MSM_SMP
+	default n
+	help
+	  This enables kernel based multi core control.
+	  (up/down hotplug based on load)
 
 config ACPU_MAX_FREQ
 	int "Maximum supported frequency"
