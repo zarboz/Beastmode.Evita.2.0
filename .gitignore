@@ -35,7 +35,7 @@ modules.builtin
 *.bak
 *.img
 *.gz
-
+*.rej
 
 #
 # Top-level generic files
