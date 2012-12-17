@@ -2880,8 +2880,8 @@ static void headset_init(void)
 				pr_info("[HS_BOARD] %s: Config ERROR: GPIO=%u, rc=%d\n",
 					__func__, headset_rx[i].gpio, rc);
 		}
-	} else {
-	/* XC and higher needs to config for level shift enable*/
+	}/* else {
+	 XC and higher needs to config for level shift enable
 		for (i = 0; i < 5; i++) {
 			rc = pm8xxx_gpio_config(headset_rx_xc[i].gpio,
 						&headset_rx_xc[i].config);
@@ -2889,7 +2889,7 @@ static void headset_init(void)
 				pr_info("[HS_BOARD] %s: Config ERROR: GPIO=%u, rc=%d\n",
 					__func__, headset_rx[i].gpio, rc);
 		}
-	}
+	}*/
 }
 
 static void headset_power(int enable)

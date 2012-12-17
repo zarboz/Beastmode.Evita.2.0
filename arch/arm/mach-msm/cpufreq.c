@@ -107,7 +107,55 @@ static void set_cpu_work(struct work_struct *work)
 	complete(&cpu_work->complete);
 }
 #endif
+#ifdef CONFIG_CMDLINE_OPTIONS
+static void msm_cpufreq_early_suspend(struct early_suspend *h)
+{
+	uint32_t curfreq;
+	int cpu;
 
+	for_each_possible_cpu(cpu) {
+		mutex_lock(&per_cpu(cpufreq_suspend, cpu).suspend_mutex);
+		if (cmdline_maxscroff) {
+			cmdline_scroff = true;
+			curfreq = acpuclk_get_rate(cpu);
+			if (curfreq > cmdline_maxscroff) {
+				acpuclk_set_rate(cpu, cmdline_maxscroff, SETRATE_CPUFREQ);
+				curfreq = acpuclk_get_rate(cpu);
+				printk(KERN_INFO "[Blackout-maxscroff]: Limited freq to '%u'\n", curfreq);
+			}
+		}
+		mutex_unlock(&per_cpu(cpufreq_suspend, cpu).suspend_mutex);
+	}
+}
+
+static void msm_cpufreq_late_resume(struct early_suspend *h)
+{
+	uint32_t curfreq;
+	int cpu;
+	struct cpufreq_work_struct *cpu_work;
+
+	for_each_possible_cpu(cpu) {
+		mutex_lock(&per_cpu(cpufreq_suspend, cpu).suspend_mutex);
+		if (cmdline_scroff == true) {
+			cmdline_scroff = false;
+			cpu_work = &per_cpu(cpufreq_work, cpu);
+			curfreq = acpuclk_get_rate(cpu);
+			if (curfreq != cpu_work->frequency) {
+				acpuclk_set_rate(cpu, cpu_work->frequency, SETRATE_CPUFREQ);
+				curfreq = acpuclk_get_rate(cpu);
+				printk(KERN_INFO "[Blackout-maxscron]: Unlocking freq to '%u'\n", curfreq);
+			}
+		}
+		mutex_unlock(&per_cpu(cpufreq_suspend, cpu).suspend_mutex);
+	}
+}
+
+static struct early_suspend msm_cpufreq_early_suspend_handler = {
+	.level = EARLY_SUSPEND_LEVEL_BLANK_SCREEN + 1,
+	.suspend = msm_cpufreq_early_suspend,
+	.resume = msm_cpufreq_late_resume,
+};
+#endif
 static int msm_cpufreq_target(struct cpufreq_policy *policy,
 				unsigned int target_freq,
 				unsigned int relation)

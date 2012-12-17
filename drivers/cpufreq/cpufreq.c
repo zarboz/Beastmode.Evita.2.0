@@ -365,9 +365,22 @@ static ssize_t show_##file_name				\
 {							\
 	return sprintf(buf, "%u\n", policy->object);	\
 }
-
+#ifdef CONFIG_CMDLINE_OPTIONS
+#define show_one_cpuinfomaxfreq(file_name, object)		\
+static ssize_t show_##file_name					\
+(struct cpufreq_policy *policy, char *buf)			\
+{								\
+	if (cmdline_maxkhz) { 				    	\
+		return sprintf(buf, "%u\n", cmdline_maxkhz);	\
+	} else {						\
+		return sprintf(buf, "%u\n", policy->object);	\
+	}							\
+}
+show_one_cpuinfomaxfreq(cpuinfo_max_freq, cpuinfo.max_freq);
+#else
+show_one(cpuinfo_max_freq, max);
+#endif
 show_one(cpuinfo_min_freq, cpuinfo.min_freq);
-show_one(cpuinfo_max_freq, cpuinfo.max_freq);
 show_one(cpuinfo_transition_latency, cpuinfo.transition_latency);
 show_one(scaling_min_freq, min);
 show_one(scaling_max_freq, max);

@@ -25,6 +25,19 @@
 #include <linux/gpio_keys.h>
 #include <linux/workqueue.h>
 #include <linux/gpio.h>
+<<<<<<< HEAD
+#ifdef CONFIG_TOUCHSCREEN_SYNAPTICS_SWEEP2WAKE
+#include <linux/synaptics_i2c_rmi.h>
+#endif
+=======
+<<<<<<< HEAD
+=======
+#include <linux/wakelock.h>
+#ifdef CONFIG_TOUCHSCREEN_SYNAPTICS_SWEEP2WAKE
+#include <linux/synaptics_i2c_rmi.h>
+#endif
+>>>>>>> d8d5c0b... sweep2wake: add initial sweep2wake support
+>>>>>>> 1de97f2... sweep2wake: add initial sweep2wake support
 
 struct gpio_button_data {
 	struct gpio_keys_button *button;
@@ -483,6 +496,13 @@ static int __devinit gpio_keys_probe(struct platform_device *pdev)
 	input->id.vendor = 0x0001;
 	input->id.product = 0x0001;
 	input->id.version = 0x0100;
+
+#ifdef CONFIG_TOUCHSCREEN_SYNAPTICS_SWEEP2WAKE
+	if (!strcmp(input->name, "gpio-keys")) {
+		sweep2wake_setdev(input);
+		printk(KERN_INFO "[sweep2wake]: set device %s\n", input->name);
+	}
+#endif
 
 	/* Enable auto repeat feature of Linux input subsystem */
 	if (pdata->rep)
