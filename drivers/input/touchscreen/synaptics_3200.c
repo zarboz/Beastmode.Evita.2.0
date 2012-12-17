@@ -7,13 +7,6 @@
  * License version 2, as published by the Free Software Foundation, and
  * may be copied, distributed, and modified under those terms.
  *
- * Synaptics sweep2wake mods based off of showp1984's cypress mod
- * Ported to ATMEL by Chad Goodman   4/2012 for Gingerbread (Linux 2.6)
- * Adopted for ICS 5/2012 (Linux 3.0) by Chad Goodman
- * SYSFS support for Off/On/On +backlight by 6/2012 by Chad Goodman
- * SYSFS start and end points by Chad Goodman
- * Copyright (C) 2012 Chad Goodman <chad.goodman@gmail.com> , All Rights Reserved
- * 
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -1447,7 +1440,7 @@ static ssize_t atmel_sweep2wake_about_show(struct device *dev,
 {
 	size_t count = 0;
 
-	count += sprintf(buf, "Ported to Synaptics Touchscreen by Chad Goodman Copyright (C) 2012 Chad Goodman <chad.goodman@gmail.com> , All Rights Reserved\n");
+	count += sprintf(buf, "Thanks :D\n");
 
 	return count;
 }
