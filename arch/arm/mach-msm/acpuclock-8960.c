@@ -762,8 +762,6 @@ static unsigned int calculate_vdd_core(struct acpu_level *tgt)
 static int acpuclk_8960_set_rate(int cpu, unsigned long rate,
 				 enum setrate_reason reason)
 {
-	
-	
 	struct core_speed *strt_acpu_s, *tgt_acpu_s;
 	struct l2_level *tgt_l2_l;
 	struct acpu_level *tgt;
@@ -777,12 +775,10 @@ static int acpuclk_8960_set_rate(int cpu, unsigned long rate,
 		rc = -EINVAL;
 		goto out;
 	}
-	
 #ifdef CONFIG_CMDLINE_OPTIONS
-	if ((cmdline_scroff == true) && (rate > cmdline_maxscroff))
-		rate = cmdline_maxscroff;
+	if ((cmdline_scroff == true) && (rate >cmdline_maxscroff))
+	    rate = cmdline_maxscroff;
 #endif
-		
 	if (reason == SETRATE_CPUFREQ || reason == SETRATE_HOTPLUG)
 		mutex_lock(&driver_lock);
 
@@ -1153,6 +1149,7 @@ static void kraitv2_apply_vmin(struct acpu_level *tbl)
 		if (tbl->vdd_core < MIN_VDD_SC)
 			tbl->vdd_core = MIN_VDD_SC;
 }
+
 #ifdef CONFIG_CMDLINE_OPTIONS
 uint32_t acpu_check_khz_value(unsigned long khz)
 {
@@ -1195,6 +1192,7 @@ uint32_t acpu_check_khz_value(unsigned long khz)
 EXPORT_SYMBOL(acpu_check_khz_value);
 /* end cmdline_khz */
 #endif
+
 static struct acpu_level * __init select_freq_plan(void)
 {
 	struct acpu_level *l, *max_acpu_level = NULL;
@@ -1237,16 +1235,16 @@ static struct acpu_level * __init select_freq_plan(void)
 		/* Force apply CPU table by writeconfig */
 		if (!cpu_is_krait_v1()){
 			if(kernel_flag & KERNEL_FLAG_PVS_SLOW_CPU){
-				pr_info("ACPU PVS: Force BLACKOUT by writeconfig\n");
+				pr_info("ACPU PVS: Force SLOW by writeconfig\n");
 				v2 = acpu_freq_tbl_8960_kraitv2_blackout;
 			}
 			else if (kernel_flag & KERNEL_FLAG_PVS_NOM_CPU){
-				pr_info("ACPU PVS: Force BLACKOUT by writeconfig\n");
+				pr_info("ACPU PVS: Force NOMINAL by writeconfig\n");
 				v2 = acpu_freq_tbl_8960_kraitv2_blackout;
 			}
 			else if (kernel_flag & KERNEL_FLAG_PVS_FAST_CPU){
 				v2 = acpu_freq_tbl_8960_kraitv2_blackout;
-				pr_info("ACPU PVS: Force BLACKOUT by writeconfig\n");
+				pr_info("ACPU PVS: Force FAST by writeconfig\n");
 			}
 		}
 
@@ -1268,22 +1266,7 @@ static struct acpu_level * __init select_freq_plan(void)
 		kraitv2_apply_vmin(acpu_freq_tbl);
 	}
 
-#ifdef CONFIG_CPU_FREQ_MIN_MAX
-	/* Adjust frequency table according to custom acpu_max_freq */
-	if (acpu_max_freq) {
-	    for (l = acpu_freq_tbl; l->speed.khz != 0; l++) {
-		  if (l->speed.khz == acpu_max_freq) {
-		    /* Custom max freq found in table.
-		    * Mark all subsequent frequencies
-		    * as not supported.
-		    */
-		for (++l; l->speed.khz != 0; l++)
-		      l->use_for_scaling = 0;
-		break;
-	 }
-    }
-}
-#endif
+
 	/* Find the max supported scaling frequency. */
 	for (l = acpu_freq_tbl; l->speed.khz != 0; l++)
 		if (l->use_for_scaling)
@@ -1302,17 +1285,32 @@ static struct acpuclk_data acpuclk_8960_data = {
 	.wait_for_irq_khz = STBY_KHZ,
 };
 
+int processor_name_read_proc(char *page, char **start, off_t off,
+			   int count, int *eof, void *data)
+{
+	char *p = page;
+#ifdef CONFIG_CMDLINE_OPTIONS
+	if (cmdline_maxkhz) {
+		p += sprintf(p, "%u", (cmdline_maxkhz/1000));
+		p += sprintf(p, "MHz Blackout Dual Core");
+	} else {
+#endif
+		p += sprintf(p, "%u", (CONFIG_MSM_CPU_FREQ_MAX/1000));
+		p += sprintf(p, "MHz Blackout Dual Core");
+#ifdef CONFIG_CMDLINE_OPTIONS
+	}
+#endif
+	return p - page;
+}
+
 static int __init acpuclk_8960_init(struct acpuclk_soc_data *soc_data)
-{ 
-	
+{
 	struct acpu_level *max_acpu_level = select_freq_plan();
 	init_clock_sources(&scalable[L2], &max_acpu_level->l2_level->speed);
 	on_each_cpu(per_cpu_init, max_acpu_level, true);
 
 	regulator_init();
 	bus_init();
-	
-	
 	cpufreq_table_init();
 
 	acpuclk_register(&acpuclk_8960_data);
@@ -1324,3 +1322,4 @@ static int __init acpuclk_8960_init(struct acpuclk_soc_data *soc_data)
 struct acpuclk_soc_data acpuclk_8960_soc_data __initdata = {
 	.init = acpuclk_8960_init,
 };
+

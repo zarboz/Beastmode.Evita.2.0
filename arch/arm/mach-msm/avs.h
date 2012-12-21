@@ -15,8 +15,8 @@
 #define AVS_H
 
 #define VOLTAGE_MIN  800 /* mV */
-#define VOLTAGE_MAX  1450
-#define VOLTAGE_STEP 28
+#define VOLTAGE_MAX  1350
+#define VOLTAGE_STEP 25
 
 int __init avs_init(int (*set_vdd)(int), u32 freq_cnt, u32 freq_idx);
 void __exit avs_exit(void);
