@@ -775,6 +775,10 @@ static int acpuclk_8960_set_rate(int cpu, unsigned long rate,
 		rc = -EINVAL;
 		goto out;
 	}
+#ifdef CONFIG_CMDLINE_OPTIONS
+	if ((cmdline_scroff == true) && (rate >cmdline_maxscroff))
+	    rate = cmdline_maxscroff;
+#endif
 	if (reason == SETRATE_CPUFREQ || reason == SETRATE_HOTPLUG)
 		mutex_lock(&driver_lock);
 
@@ -1145,7 +1149,48 @@ static void kraitv2_apply_vmin(struct acpu_level *tbl)
 		if (tbl->vdd_core < MIN_VDD_SC)
 			tbl->vdd_core = MIN_VDD_SC;
 }
+#ifdef CONFIG_CMDLINE_OPTIONS
+uint32_t acpu_check_khz_value(unsigned long khz)
+{
+	struct acpu_level *f;
 
+	if (khz > 2106000)
+		return CONFIG_MSM_CPU_FREQ_MAX;
+
+	if (khz < 192)
+		return CONFIG_MSM_CPU_FREQ_MIN;
+
+	for (f = acpu_freq_tbl_8960_kraitv2_blackout; f->speed.khz != 0; f++) {
+		if (khz < 192000) {
+			if (f->speed.khz == (khz*1000))
+				return f->speed.khz;
+			if ((khz*1000) > f->speed.khz) {
+				f++;
+				if ((khz*1000) < f->speed.khz) {
+					f--;
+					return f->speed.khz;
+				}
+				f--;
+			}
+		}
+		if (f->speed.khz == khz) {
+			return 1;
+		}
+		if (khz > f->speed.khz) {
+			f++;
+			if (khz < f->speed.khz) {
+				f--;
+				return f->speed.khz;
+			}
+			f--;
+		}
+	}
+
+	return 0;
+}
+EXPORT_SYMBOL(acpu_check_khz_value);
+/* end cmdline_khz */
+#endif
 static struct acpu_level * __init select_freq_plan(void)
 {
 	struct acpu_level *l, *max_acpu_level = NULL;

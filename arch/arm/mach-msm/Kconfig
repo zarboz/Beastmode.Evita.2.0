@@ -2288,6 +2288,24 @@ config ACPU_MAX_FREQ
 	help
 	  If set to non-zero number, will search for this frequency in
           frequency table and set as maximum supported frequency if found.
+          
+config CMDLINE_OPTIONS
+	bool "Enable cmdline khz/gov/maxscroff command parsing"
+	default y
+	help
+	  This enables the parsing of maxkhz=<VALUEinKHZ>,
+	  minkhz=<VALUEinKHZ>, governor=<GOVERNOR.NAME> and
+	  maxscroff=<VALUEinKHZ> commands from the kernels cmdline.
+	  This also enables a freq. cap while the screen is off
+	  and gives support for sweep2wake features.
+            
+config MSM_MPDEC
+        bool "Enable kernel based mpdecision"
+   depends on MSM_SMP
+      default n
+       help
+      This enables kernel based multi core control.
+	(up/down hotplug based on load)
 
 config AUDIO_USAGE_FOR_POWER_CONSUMPTION
 	bool "AUDIO_USAGE_FOR_POWER_CONSUMPTION"
